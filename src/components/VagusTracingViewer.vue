@@ -1,7 +1,7 @@
 <template>
   <div ref="viewerContainer" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp" class="viewer-container">
-    <div class="selected-region-label" :v-if=selectedRegionLabel>{{ selectedRegionLabel }}</div>
-    <div class="highlighted-region-label" :v-if=highlightedRegionLabel>{{ highlightedRegionLabel }}</div>
+    <div class="selected-region-label">Selected Vagus Region: {{ selectedRegionLabel }}</div>
+    <div class="highlighted-region-label">Highlighted Vagus Region: {{ highlightedRegionLabel }}</div>
   </div>
 </template>
 
@@ -66,16 +66,17 @@ onMounted(async () => {
   raycaster = new THREE.Raycaster()
   mouse = new THREE.Vector2()
 
+  renderViewer()
   animate()
 })
 
 const init3DViewer = () => {
   scene = new THREE.Scene()
-  camera = new THREE.PerspectiveCamera(10, 1, 0.1, 5000)
-  camera.position.z = 500
+  camera = new THREE.PerspectiveCamera(50, 1, 0.01, 10000)
+  camera.position.z = 5000
 
   renderer = new THREE.WebGLRenderer()
-  renderer.setSize('800', '800')
+  renderer.setSize(window.innerWidth, window.innerHeight)
   viewerContainer.value.appendChild(renderer.domElement)
 
   scene.add(new THREE.AxesHelper(5))
@@ -132,8 +133,10 @@ const onMouseDown = (event) => {
 
 const onMouseMove = (event) => {
   mouseMoved.value = true
-  mouse.x = event.offsetX / 800 * 2 - 1
-  mouse.y = -(event.offsetY / 800) * 2 + 1
+  if (viewerContainer.value == null) { return }
+  const { offsetWidth, offsetHeight } = viewerContainer.value
+  mouse.x = event.offsetX / offsetWidth * 2 - 1
+  mouse.y = -(event.offsetY / offsetHeight) * 2 + 1
 
   raycaster.setFromCamera(mouse, camera)
   const intersects = raycaster.intersectObjects(scene.children)
@@ -167,8 +170,10 @@ const onMouseUp = (event) => {
   if (mouseMoved.value) {
     return
   }
-  mouse.x = event.offsetX / 800 * 2 - 1
-  mouse.y = -(event.offsetY / 800) * 2 + 1
+  if (viewerContainer.value == null) { return }
+  const { offsetWidth, offsetHeight } = viewerContainer.value
+  mouse.x = event.offsetX / offsetWidth * 2 - 1
+  mouse.y = -(event.offsetY / offsetHeight) * 2 + 1
 
   raycaster.setFromCamera(mouse, camera)
   const intersects = raycaster.intersectObjects(scene.children)
@@ -190,16 +195,30 @@ const onMouseUp = (event) => {
   }
 }
 
-const highlightedRegionLabel = computed(() => lastHighlightedNerveSegment.value != null ? `Highlighted Vagus Region: ${lastHighlightedNerveSegment.value?.userData?.fileName.replace(/\.[^/.]+$/, "")}` : "")
-const selectedRegionLabel = computed(() => lastSelectedNerveSegment.value != null ? `Selected Vagus Region: ${lastSelectedNerveSegment.value?.userData?.fileName.replace(/\.[^/.]+$/, "")}` : "")
+const highlightedRegionLabel = computed(() => lastHighlightedNerveSegment.value != null ? `${lastHighlightedNerveSegment.value?.userData?.fileName.replace(/\.[^/.]+$/, "")}` : "")
+const selectedRegionLabel = computed(() => lastSelectedNerveSegment.value != null ? `${lastSelectedNerveSegment.value?.userData?.fileName.replace(/\.[^/.]+$/, "")}` : "")
 
-const renderViewer = () => {
+// Render
+function renderViewer() {
   renderer.render(scene, camera)
+  window.addEventListener('resize', onWindowResize, false)
+  function onWindowResize() {
+    if (viewerContainer.value == null) { return }
+    const { offsetWidth, offsetHeight } = viewerContainer.value
+    camera.aspect = offsetWidth / offsetHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(offsetWidth, offsetHeight)
+    render()
+  }
 }
 
-const animate = () => {
-  requestAnimationFrame(animate)
-  renderViewer()
+function animate() {
+    requestAnimationFrame(animate)
+    render()
+}
+
+function render() {
+    renderer.render(scene, camera);
 }
 
 onBeforeUnmount(() => {
@@ -211,23 +230,22 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .viewer-container {
-  position: absolute;
-  right: 0;
-  width: 50rem;
-  height: 100vh;
   min-height: 50rem;
+  min-width: 50rem;
+  height: 100vh;
+  width: 100vw;
 }
 .selected-region-label {
   position: absolute;
-  top: 2rem;
-  right: 2rem;
+  top: 4rem;
+  left: 1rem;
   z-index: 1;
   color: green;
 }
 .highlighted-region-label {
   position: absolute;
-  top: 1rem;
-  right: 2rem;
+  top: 6rem;
+  left: 1rem;
   z-index: 1;
   color: red;
 }
@@ -235,8 +253,9 @@ canvas {
   background-color: #999;
   position: absolute;
   min-height: 50rem;
+  min-width: 50rem;
   height: 100vh;
-  width: 50rem;
+  width: 100vw;
   right: 0;
   top: 0;
 }
