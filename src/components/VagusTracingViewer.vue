@@ -76,7 +76,8 @@ const init3DViewer = () => {
   camera.position.z = 5000
 
   renderer = new THREE.WebGLRenderer()
-  renderer.setSize(window.innerWidth, window.innerHeight)
+  const { offsetWidth, offsetHeight } = viewerContainer.value
+  renderer.setSize(offsetWidth, offsetHeight)
   viewerContainer.value.appendChild(renderer.domElement)
 
   scene.add(new THREE.AxesHelper(5))
