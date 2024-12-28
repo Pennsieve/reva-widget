@@ -23,7 +23,12 @@
       <div v-if="coordFilesLoading && subjectId != ''" class="vagus-viewer" v-loading="coordFilesLoading" element-loading-text="Loading 3D vagus tracing files..." />
       <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles />
       <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
-      <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles />
+      <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles @file-selected="onFileSelected" />
+      
+      <el-dialog class="dialog" v-model="isDialogOpen" @close="closeDialog">
+        <VideoPlayer v-if="selectedFileType === 'MP4'" :videoSrc="selectedFilePath" />
+        <img v-if="selectedFileType === 'PNG'" :src="selectedFilePath" style="width: 100%; height: auto;" />
+      </el-dialog>
     </template>
   </div>
 </template>
@@ -32,16 +37,20 @@
 import { ref, watch } from "vue";
 import VagusTracingViewer from './VagusTracingViewer.vue'
 import FileSelector from './FileSelector.vue'
+import VideoPlayer from './VideoPlayer.vue'
 import { ElMessage } from 'element-plus'
 
 const subjectId = ref('')
 const subjectIds = ref([])
 const vagusCoordFiles = ref([])
 const vagusMicroCtFiles = ref([])
+const selectedFilePath = ref('')
+const selectedFileType = ref('')
 const subjectIdsLoading = ref(true)
 const coordFilesLoading = ref(true)
 const microCtFilesLoading = ref(true)
 const error = ref(null)
+const isDialogOpen = ref(false)
 
 try {
   subjectIds.value = await fetchSubjectIds()
@@ -59,6 +68,19 @@ watch(error, (newValue) => {
     type: 'error',
     duration: 0
   })
+})
+
+watch(selectedFileType, (newValue) => {
+  switch (newValue) {
+    case 'MP4':
+      openDialog()
+      break;
+    case 'PNG':
+      openDialog()
+      break;
+    default:
+      break;
+  }
 })
 
 watch(subjectId, async (newValue) => {
@@ -120,6 +142,23 @@ async function fetchMicroCtFiles(subjectId) {
     throw new Error(`Error fetching Micro CT files!: ${error}`);
   }
 }
+
+function onFileSelected(file) {
+  if (!file || file == {}) { return }
+  selectedFilePath.value = file.s3Url
+  selectedFileType.value = file.type
+}
+
+function openDialog() {
+  isDialogOpen.value = true
+}
+
+function closeDialog() {
+  isDialogOpen.value = false
+  selectedFilePath.value = ''
+  selectedFileType.value = ''
+}
+
 </script>
 <style scoped>
 .widget {
@@ -142,5 +181,8 @@ async function fetchMicroCtFiles(subjectId) {
 .file-selector {
   flex: 0 0 20%;
   overflow-y: auto;
+}
+.dialog {
+  --el-dialog-width: 80%
 }
 </style>
