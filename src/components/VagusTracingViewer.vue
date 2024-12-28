@@ -147,7 +147,7 @@ const onMouseMove = (event) => {
     if (closestObject.userData?.fileName == lastSelectedNerveSegment.value?.userData?.fileName) {
       return
     }
-    if (lastHighlightedNerveSegment.value && lastHighlightedNerveSegment.value !== closestObject) {
+    if (lastHighlightedNerveSegment.value && lastHighlightedNerveSegment.value != closestObject) {
       lastHighlightedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
     }
 
@@ -182,7 +182,7 @@ const onMouseUp = (event) => {
   if (intersects.length > 0) {
     const closestObject = intersects[0].object
 
-    if (lastSelectedNerveSegment.value && lastSelectedNerveSegment.value !== closestObject) {
+    if (lastSelectedNerveSegment.value && lastSelectedNerveSegment.value != closestObject) {
       lastSelectedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
     }
 

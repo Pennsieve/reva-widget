@@ -1,8 +1,5 @@
 <template>
-  <div v-if="error">
-    There was an error loading the vagus tracing files
-  </div>
-  <div class="widget" v-else v-loading="subjectIdsLoading" element-loading-text="Loading REVA subject ids...">
+  <div class="widget" v-loading="subjectIdsLoading" element-loading-text="Loading REVA subject ids...">
     <div class="subject-selector">
       <span>
         Selected Subject: 
@@ -12,6 +9,7 @@
         placeholder="Select Subject Id"
         size="large"
         style="width: 240px"
+        :disabled="subjectId != '' && (coordFilesLoading || microCtFilesLoading)"
       >
         <el-option
           v-for="item in subjectIds"
@@ -21,14 +19,20 @@
         />
       </el-select>
     </div>
-    <VagusTracingViewer v-if="!coordFilesLoading" class="vagus-viewer" :coord-files=vagusCoordFiles />
-    <FileSelector v-if="!microCtFilesLoading" class="file-selector" :files=vagusMicroCtFiles />
+    <template v-if="error == null">
+      <div v-if="coordFilesLoading && subjectId != ''" class="vagus-viewer" v-loading="coordFilesLoading" element-loading-text="Loading 3D vagus tracing files..." />
+      <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles />
+      <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
+      <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles />
+    </template>
   </div>
 </template>
+
 <script setup>
 import { ref, watch } from "vue";
 import VagusTracingViewer from './VagusTracingViewer.vue'
 import FileSelector from './FileSelector.vue'
+import { ElMessage } from 'element-plus'
 
 const subjectId = ref('')
 const subjectIds = ref([])
@@ -47,10 +51,21 @@ try {
   subjectIdsLoading.value = false
 }
 
+watch(error, (newValue) => {
+  if (newValue == null) { return }
+  ElMessage({
+    showClose: true,
+    message: newValue,
+    type: 'error',
+    duration: 0
+  })
+})
+
 watch(subjectId, async (newValue) => {
   if (newValue == '') { return }
   coordFilesLoading.value = true
   microCtFilesLoading.value = true
+  error.value = null
   try {
     vagusCoordFiles.value = await fetchCoordFiles(newValue)
   } catch (err) {
@@ -120,7 +135,9 @@ async function fetchMicroCtFiles(subjectId) {
   color: white;
 }
 .vagus-viewer {
+  display: flex;
   flex: 0 0 80%;
+  max-width: 80%;
 }
 .file-selector {
   flex: 0 0 20%;
