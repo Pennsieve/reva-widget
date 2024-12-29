@@ -1,0 +1,20 @@
+#app {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  display: contents;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: contents;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+}
