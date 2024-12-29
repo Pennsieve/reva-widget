@@ -24,7 +24,6 @@
       <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles />
       <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
       <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles @file-selected="onFileSelected" />
-      
       <el-dialog class="dialog" v-model="isDialogOpen" @close="closeDialog">
         <VideoPlayer v-if="selectedFileType === 'MP4'" :videoSrc="selectedFilePath" />
         <img v-if="selectedFileType === 'PNG'" :src="selectedFilePath" style="width: 100%; height: auto;" />
@@ -174,9 +173,9 @@ function closeDialog() {
   color: white;
 }
 .vagus-viewer {
-  display: flex;
   flex: 0 0 80%;
   max-width: 80%;
+  background-color: black;
 }
 .file-selector {
   flex: 0 0 20%;

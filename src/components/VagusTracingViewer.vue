@@ -147,8 +147,11 @@ const onMouseMove = (event) => {
     if (closestObject.userData?.fileName == lastSelectedNerveSegment.value?.userData?.fileName) {
       return
     }
-    if (lastHighlightedNerveSegment.value && lastHighlightedNerveSegment.value != closestObject) {
-      lastHighlightedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
+    else if (lastHighlightedNerveSegment.value && closestObject.userData?.fileName != lastHighlightedNerveSegment.value?.userData?.fileName) {
+      if (lastSelectedNerveSegment.value?.userData?.fileName != lastHighlightedNerveSegment.value?.userData?.fileName)
+      {
+        lastHighlightedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
+      }
     }
 
     closestObject.material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 3 })
@@ -158,7 +161,7 @@ const onMouseMove = (event) => {
       if (lastSelectedNerveSegment.value == null) {
         lastHighlightedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
       }
-      else if (lastHighlightedNerveSegment.value?.userData?.fileName != lastSelectedNerveSegment.value.userData?.fileName) {
+      else if (lastHighlightedNerveSegment.value?.userData?.fileName != lastSelectedNerveSegment.value?.userData?.fileName) {
         lastHighlightedNerveSegment.value.material = new THREE.LineBasicMaterial({ color: 0xffffff })
       }
       lastHighlightedNerveSegment.value = null
