@@ -24,9 +24,9 @@
       <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles />
       <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
       <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles @file-selected="onFileSelected" />
-      <el-dialog class="dialog" v-model="isDialogOpen" @close="closeDialog">
-        <VideoPlayer v-if="selectedFileType === 'MP4'" :videoSrc="selectedFilePath" />
-        <img v-if="selectedFileType === 'PNG'" :src="selectedFilePath" style="width: 100%; height: auto;" />
+      <el-dialog v-if="selectedFile" class="dialog" v-model="isDialogOpen" @close="closeDialog" :title="selectedFile.name">
+        <VideoPlayer v-if="selectedFile.type === 'MP4'" :videoSrc="selectedFile.s3Url" />
+        <img v-if="selectedFile.type === 'PNG'" :src="selectedFile.s3Url" style="width: 100%; height: auto;" />
       </el-dialog>
     </template>
   </div>
@@ -43,8 +43,7 @@ const subjectId = ref('')
 const subjectIds = ref([])
 const vagusCoordFiles = ref([])
 const vagusMicroCtFiles = ref([])
-const selectedFilePath = ref('')
-const selectedFileType = ref('')
+const selectedFile = ref(null)
 const subjectIdsLoading = ref(true)
 const coordFilesLoading = ref(true)
 const microCtFilesLoading = ref(true)
@@ -69,8 +68,9 @@ watch(error, (newValue) => {
   })
 })
 
-watch(selectedFileType, (newValue) => {
-  switch (newValue) {
+watch(selectedFile, (newValue) => {
+  if (newValue == null) { return }
+  switch (newValue.type) {
     case 'MP4':
       openDialog()
       break;
@@ -144,8 +144,7 @@ async function fetchMicroCtFiles(subjectId) {
 
 function onFileSelected(file) {
   if (!file || file == {}) { return }
-  selectedFilePath.value = file.s3Url
-  selectedFileType.value = file.type
+  selectedFile.value = file
 }
 
 function openDialog() {
@@ -154,8 +153,7 @@ function openDialog() {
 
 function closeDialog() {
   isDialogOpen.value = false
-  selectedFilePath.value = ''
-  selectedFileType.value = ''
+  selectedFile.value = null
 }
 
 </script>
