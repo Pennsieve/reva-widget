@@ -7,12 +7,13 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/reva-widget.umd.cjs",
-  "module": "./dist/reva-widget.js",
+  "main": "dist/reva-widget.umd.cjs",
+  "module": "dist/reva-widget.es.js",
   "exports": {
     ".": {
-      "import": "./dist/reva-widget.js",
-      "require": "./dist/reva-widget.umd.cjs"
+      "import": "./dist/reva-widget.es.js",
+      "require": "./dist/reva-widget.umd.cjs",
+      "css": "./dist/reva-widget.css"
     }
   },
   "scripts": {
