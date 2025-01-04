@@ -4,7 +4,9 @@
   "description": "A Vue 3 component used for exploring the mapping between REVA 3D Vagus nerve tracing files and their corresponding MicroCT files",
   "private": false,
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/reva-widget.umd.cjs",
   "module": "./dist/reva-widget.js",
   "exports": {
@@ -38,6 +40,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Pennsieve/reva-widget"
+    "url": "git+https://github.com/Pennsieve/reva-widget.git"
   }
 }
