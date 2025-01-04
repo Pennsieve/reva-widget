@@ -9,7 +9,7 @@
 import { onMounted, onBeforeUnmount, ref, computed } from "vue"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm"
+import * as d3 from "d3"
 
 const props = defineProps({
   coordFiles: {

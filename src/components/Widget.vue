@@ -31,6 +31,7 @@
 </template>
 
 <script setup>
+import { useConfig } from '../index.js'
 import { ref, watch } from "vue";
 import VagusTracingViewer from './VagusTracingViewer.vue'
 import FileSelector from './FileSelector.vue'
@@ -47,6 +48,7 @@ const coordFilesLoading = ref(true)
 const microCtFilesLoading = ref(true)
 const error = ref(null)
 const isDialogOpen = ref(false)
+const config = useConfig()
 
 watch(error, (newValue) => {
   if (newValue == null) { return }
@@ -105,7 +107,7 @@ try {
 
 async function fetchSubjectIds() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SPARC_API}/reva/subject-ids`)
+    const response = await fetch(`${config.sparcApi}/reva/subject-ids`)
     const data = await response.json()
     return data['ids']
   } catch (error) {
@@ -115,7 +117,7 @@ async function fetchSubjectIds() {
 
 async function fetchCoordFiles(subjectId) {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SPARC_API}/reva/tracing-files/${subjectId}`)
+    const response = await fetch(`${config.sparcApi}/reva/tracing-files/${subjectId}`)
     if (!response.ok) {
       throw new Error(`Error fetching 3D tracing files for ${subjectId}! ${response.status}: ${response.statusText}`)
     }
@@ -128,7 +130,7 @@ async function fetchCoordFiles(subjectId) {
 
 async function fetchMicroCtFiles(subjectId) {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SPARC_API}/reva/micro-ct-files/${subjectId}`)
+    const response = await fetch(`${config.sparcApi}/reva/micro-ct-files/${subjectId}`)
     if (!response.ok) {
       if (response.status == '404')
         throw new Error(`Failed to fetch files for ${subjectId} because they do not exist for this subject.`)
@@ -163,6 +165,7 @@ function closeDialog() {
   width: 100%;
   overflow: auto;
   display: flex;
+  position: relative;
 }
 .subject-selector {
   position: absolute;
