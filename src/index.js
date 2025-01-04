@@ -10,6 +10,6 @@ export const useConfig = () => {
   return config
 }
 
-import Widget from './components/Widget.vue'
+import RevaWidget from './components/Widget.vue'
 
-export { Widget }
+export { RevaWidget }
