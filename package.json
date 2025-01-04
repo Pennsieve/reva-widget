@@ -1,22 +1,43 @@
 {
   "name": "reva-widget",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A Vue 3 component used for exploring the mapping between REVA 3D Vagus nerve tracing files and their corresponding MicroCT files",
+  "private": false,
   "type": "module",
+  "files": ["dist"],
+  "main": "./dist/reva-widget.umd.cjs",
+  "module": "./dist/reva-widget.js",
+  "exports": {
+    ".": {
+      "import": "./dist/reva-widget.js",
+      "require": "./dist/reva-widget.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "element-plus": "^2.9.1",
+    "d3": "^7.9.0",
     "three": "^0.171.0",
-    "three-orbitcontrols": "^2.110.3",
-    "vue": "^3.5.13"
+    "three-orbitcontrols": "^2.110.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "element-plus": "^2.9.1",
     "vite": "^6.0.5",
-    "vite-plugin-vue-devtools": "^7.6.8"
+    "vite-plugin-vue-devtools": "^7.6.8",
+    "vue": "^3.5.13"
+  },
+  "peerDependencies": {
+    "element-plus": "^2.9.1",
+    "vue": "^3.5.13"
+  },
+  "author": "Eric Gauzens",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pennsieve/reva-widget"
   }
 }
