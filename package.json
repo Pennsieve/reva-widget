@@ -1,6 +1,6 @@
 {
   "name": "reva-widget",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Vue 3 component used for exploring the mapping between REVA 3D Vagus nerve tracing files and their corresponding MicroCT files",
   "private": false,
   "type": "module",
@@ -11,9 +11,9 @@
   "module": "dist/reva-widget.es.js",
   "exports": {
     ".": {
+      "css": "./dist/reva-widget.css",
       "import": "./dist/reva-widget.es.js",
-      "require": "./dist/reva-widget.umd.cjs",
-      "css": "./dist/reva-widget.css"
+      "require": "./dist/reva-widget.umd.cjs"
     }
   },
   "scripts": {
