@@ -16,8 +16,6 @@ export default defineConfig({
     rollupOptions: {
       external: ['vue'],
       output: {
-        format: 'umd',
-        exports: 'default',
         globals: {
           vue: 'Vue'
         },
