@@ -20,9 +20,9 @@
       </el-select>
     </div>
     <div v-if="coordFilesLoading && subjectId != ''" class="vagus-viewer" v-loading="coordFilesLoading" element-loading-text="Loading 3D vagus tracing files..." />
-    <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles />
+    <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles @segment-selected="onVagusSegmentSelected"/>
     <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
-    <FileSelector v-else class="file-selector" :files=vagusMicroCtFiles @file-selected="onFileSelected" />
+    <FileSelector v-else class="file-selector" :files=filteredVagusMicroCtFiles @file-selected="onFileSelected" />
     <el-dialog v-if="selectedFile" class="dialog" v-model="isDialogOpen" @close="closeDialog" :title="selectedFile.name">
       <VideoPlayer v-if="selectedFile.type === 'MP4'" :videoSrc="selectedFile.s3Url" />
       <img v-if="selectedFile.type === 'PNG'" :src="selectedFile.s3Url" style="width: 100%; height: auto;" />
@@ -42,6 +42,7 @@ const subjectId = ref('')
 const subjectIds = ref([])
 const vagusCoordFiles = ref([])
 const vagusMicroCtFiles = ref([])
+const filteredVagusMicroCtFiles = ref([])
 const selectedFile = ref(null)
 const subjectIdsLoading = ref(true)
 const coordFilesLoading = ref(true)
@@ -49,6 +50,20 @@ const microCtFilesLoading = ref(true)
 const error = ref(null)
 const isDialogOpen = ref(false)
 const config = useConfig()
+
+// Attempting to map segment file names to microCt filename and account for naming inconsistencies
+const SEGMENT_TO_FILE_KEYS_MAPPING = {
+  'CR-': ['CR'],
+  'CL-': ['CL'],
+  'TR-': ['TR'],
+  'TL': ['TL'],
+  'E-': ['EA','EP'],
+  'S-': ['SA', 'SP'],
+  'EA-': ['EA'],
+  'EP-': ['EP'],
+  'SA-': ['SA'],
+  'SP-': ['SP']
+}
 
 watch(error, (newValue) => {
   if (newValue == null) { return }
@@ -89,8 +104,10 @@ watch(subjectId, async (newValue) => {
   }
   try {
     vagusMicroCtFiles.value = await fetchMicroCtFiles(newValue)
+    filteredVagusMicroCtFiles.value = vagusMicroCtFiles.value
   } catch (err) {
     vagusMicroCtFiles.value = []
+    filteredVagusMicroCtFiles.value = []
     error.value = err.message;
   } finally {
     microCtFilesLoading.value = false
@@ -141,6 +158,31 @@ async function fetchMicroCtFiles(subjectId) {
     return data['files']
   } catch (error) {
     throw new Error(error.message)
+  }
+}
+
+// Based off the REVA naming convention outlined in their MicroCTDataOverview.pdf
+function getSegmentFileKeys(filename) {
+  let foundKeys = []
+  Object.keys(SEGMENT_TO_FILE_KEYS_MAPPING).forEach(segKey => {
+    if (filename.includes(segKey)) {
+      foundKeys.push(segKey)
+    }
+  })
+  return foundKeys
+}
+
+function onVagusSegmentSelected(filename) {
+  if (filename == null) {
+    filteredVagusMicroCtFiles.value = vagusMicroCtFiles.value
+  } else {
+    const segmentFileKeys = getSegmentFileKeys(filename)
+    let microCtKeys = []
+    segmentFileKeys.forEach(segKey => {
+      const segFileKeyValues = SEGMENT_TO_FILE_KEYS_MAPPING[segKey]
+      segFileKeyValues.forEach(keyValue => microCtKeys.push(keyValue))
+    })
+    filteredVagusMicroCtFiles.value = vagusMicroCtFiles.value.filter(file => microCtKeys.some(microCtKey => file.name.includes(microCtKey)))
   }
 }
 

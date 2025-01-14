@@ -6,10 +6,13 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed } from "vue"
+import { pathOr } from 'ramda'
+import { onMounted, onBeforeUnmount, ref, computed, watch } from "vue"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import * as d3 from "d3"
+
+const emit = defineEmits(['segmentSelected']);
 
 const props = defineProps({
   coordFiles: {
@@ -24,6 +27,10 @@ let MultiLineCoordArray = []
 let scene, camera, renderer, controls, raycaster, mouse
 let lastHighlightedNerveSegment = ref(null)
 let lastSelectedNerveSegment = ref(null)
+
+watch(lastSelectedNerveSegment, (newValue) => {
+  emit('segmentSelected', pathOr(null, ['userData','fileName'], newValue))
+})
 
 const loadCSVFile = (fileUrl) => {
   const loader = new THREE.FileLoader()
