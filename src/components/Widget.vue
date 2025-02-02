@@ -20,7 +20,7 @@
       </el-select>
     </div>
     <div v-if="coordFilesLoading && subjectId != ''" class="vagus-viewer" v-loading="coordFilesLoading" element-loading-text="Loading 3D vagus tracing files..." />
-    <VagusTracingViewer v-else class="vagus-viewer" :coord-files=vagusCoordFiles @segment-selected="onVagusSegmentSelected"/>
+    <VagusTracingViewer v-else class="vagus-viewer" :vagus-coord-files=vagusCoordFiles :anatomical-landmarks-folders="anatomicalLandmarksFolders" @segment-selected="onVagusSegmentSelected"/>
     <div v-if="microCtFilesLoading && subjectId != ''" class="file-selector" v-loading="microCtFilesLoading" element-loading-text="Loading subject files..." />
     <FileSelector v-else class="file-selector" :files=filteredVagusMicroCtFiles @file-selected="onFileSelected" />
     <el-dialog v-if="selectedFile" class="dialog" v-model="isDialogOpen" @close="closeDialog" :title="selectedFile.name">
@@ -41,11 +41,13 @@ import { ElMessage } from 'element-plus'
 const subjectId = ref('')
 const subjectIds = ref([])
 const vagusCoordFiles = ref([])
+const anatomicalLandmarksFolders = ref([])
 const vagusMicroCtFiles = ref([])
 const filteredVagusMicroCtFiles = ref([])
 const selectedFile = ref(null)
 const subjectIdsLoading = ref(true)
 const coordFilesLoading = ref(true)
+const anatomicalLandmarksFoldersLoading = ref(true)
 const microCtFilesLoading = ref(true)
 const error = ref(null)
 const isDialogOpen = ref(false)
@@ -92,6 +94,7 @@ watch(selectedFile, (newValue) => {
 watch(subjectId, async (newValue) => {
   if (newValue == '') { return }
   coordFilesLoading.value = true
+  anatomicalLandmarksFoldersLoading.value = true
   microCtFilesLoading.value = true
   error.value = null
   try {
@@ -101,6 +104,14 @@ watch(subjectId, async (newValue) => {
     error.value = err.message;
   } finally {
     coordFilesLoading.value = false
+  }
+  try {
+    anatomicalLandmarksFolders.value = await fetchAnatomicalLandmarksFolders(newValue)
+  } catch (err) {
+    anatomicalLandmarksFolders.value = []
+    error.value = err.message;
+  } finally {
+    anatomicalLandmarksFoldersLoading.value = false
   }
   try {
     vagusMicroCtFiles.value = await fetchMicroCtFiles(newValue)
@@ -140,6 +151,19 @@ async function fetchCoordFiles(subjectId) {
     }
     const data = await response.json()
     return data['files']
+  } catch (error) {
+    throw new Error(error.message)
+  }
+}
+
+async function fetchAnatomicalLandmarksFolders(subjectId) {
+  try {
+    const response = await fetch(`${config.sparcApi}/reva/anatomical-landmarks-files/${subjectId}`)
+    if (!response.ok) {
+      throw new Error(`Error fetching Anatomical landmarks files for ${subjectId}! ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return data['folders']
   } catch (error) {
     throw new Error(error.message)
   }
