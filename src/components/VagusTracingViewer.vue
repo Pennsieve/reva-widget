@@ -126,7 +126,6 @@ onMounted(async () => {
 const init3DViewer = () => {
   // Create and attach CSS2DRenderer
   labelRenderer = new CSS2DRenderer();
-  labelRenderer.setSize(window.innerWidth, window.innerHeight);
   labelRenderer.domElement.style.position = 'absolute';
   labelRenderer.domElement.style.top = '0px';
   labelRenderer.domElement.style.zIndex = "1";
@@ -358,7 +357,7 @@ function renderViewer() {
     camera.aspect = offsetWidth / offsetHeight
     camera.updateProjectionMatrix()
     renderer.setSize(offsetWidth, offsetHeight)
-    labelRenderer.setSize(offsetWidth, offsetHeight)
+    labelRenderer.setSize(offsetWidth, offsetHeight + 32)
     render()
   }
 }
