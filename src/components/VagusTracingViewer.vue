@@ -17,6 +17,7 @@ import * as THREE from "three"
 
 
 const emit = defineEmits(['segmentSelected']);
+const VAGUS_TRACING_LAYER_ID = 1;
 
 const props = defineProps({
   vagusCoordFiles: {
@@ -152,8 +153,7 @@ const parseCoords = () => {
 
     // Create the Line2 object with the geometry and material
     const line = new Line2(lineGeometry, lineMaterial)
-
-    
+    line.layers.set(VAGUS_TRACING_LAYER_ID)
     vagusNerveScene.add(line)
 
     line.userData = { id: `file_${index}`, fileName: props.vagusCoordFiles[index]["name"] }
@@ -181,12 +181,13 @@ const parseCoords = () => {
       resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
     })
     const line = new Line2(lineGeometry, lineMaterial)
-    line.computeLineDistances()
+    line.layers.set(0)
     
-    anatomicalLandmarksScene.add(line)
+    vagusNerveScene.add(line)
     
     //line.userData = { id: `file_${index}`, fileName: props.anatomicalLandmarksFolders[index]["name"] }
   })
+  camera.layers.enableAll()
 }
 
 const calculateCenterPoint = (coordArrays) => {
@@ -221,10 +222,9 @@ const onMouseMove = (event) => {
   const { offsetWidth, offsetHeight } = viewerContainer.value
   mouse.x = event.offsetX / offsetWidth * 2 - 1
   mouse.y = -(event.offsetY / offsetHeight) * 2 + 1
-
+  raycaster.layers.set(VAGUS_TRACING_LAYER_ID)
   raycaster.setFromCamera(mouse, camera)
   const intersects = raycaster.intersectObjects(vagusNerveScene.children)
-
   if (intersects.length > 0) {
     const closestObject = intersects[0].object
     if (closestObject.userData?.fileName == lastSelectedNerveSegment.value?.userData?.fileName) {
@@ -288,7 +288,6 @@ const selectedRegionLabel = computed(() => lastSelectedNerveSegment.value != nul
 // Render
 function renderViewer() {
   renderer.render(vagusNerveScene, camera)
-  renderer.render(anatomicalLandmarksScene, camera)
   window.addEventListener('resize', onWindowResize, false)
   function onWindowResize() {
     if (viewerContainer.value == null) { return }
@@ -306,9 +305,6 @@ function animate() {
 }
 
 function render() {
-  renderer.clear() // Clear color and depth buffers
-  renderer.render(anatomicalLandmarksScene, camera)
-  renderer.clearDepth() // Clear only the depth buffer
   renderer.render(vagusNerveScene, camera)
 }
 
