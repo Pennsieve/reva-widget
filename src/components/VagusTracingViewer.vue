@@ -12,12 +12,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
+import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as d3 from "d3"
 import * as THREE from "three"
 
 
 const emit = defineEmits(['segmentSelected']);
-const VAGUS_TRACING_LAYER_ID = 1;
+const VAGUS_TRACING_LAYER_ID = 0;
 
 const props = defineProps({
   vagusCoordFiles: {
@@ -34,13 +35,22 @@ const viewerContainer = ref(null)
 let mouseMoved = ref(false)
 let VagusTracingCoordArray = []
 let AnatomicalLandmarksCoordArray = []
-let vagusNerveScene, anatomicalLandmarksScene, camera, renderer, controls, raycaster, mouse
+let vagusNerveScene, anatomicalLandmarksScene, camera, renderer, controls, raycaster, mouse, labelRenderer
 let lastHighlightedNerveSegment = ref(null)
 let lastSelectedNerveSegment = ref(null)
 
 watch(lastSelectedNerveSegment, (newValue) => {
   emit('segmentSelected', pathOr(null, ['userData','fileName'], newValue))
 })
+
+const getAnatomicalLandmarksFolder = (name) => {
+  for (const folder of props.anatomicalLandmarksFolders) {
+    if (folder['name'] == name) {
+      return folder
+    }
+  }
+  return null
+}
 
 const loadVagusTracingCSVFile = (fileUrl) => {
   const loader = new THREE.FileLoader()
@@ -81,20 +91,21 @@ const loadAnatomicalLandmarksCSVFile = (fileUrl) => {
     )
   })
 }
-
+const folder = getAnatomicalLandmarksFolder('Skeletal-landmarks')
+if (folder) {
+  for (const file of folder['files'])
+    await loadAnatomicalLandmarksCSVFile(file["s3Url"])
+}
 for (const file of props.vagusCoordFiles) {
   await loadVagusTracingCSVFile(file["s3Url"])
-}
-for (const folder of props.anatomicalLandmarksFolders) {
-  if (folder['name'] == 'Skeletal-landmarks')
-    for (const file of folder['files'])
-      await loadAnatomicalLandmarksCSVFile(file["s3Url"])
 }
 
 onMounted(async () => {
   init3DViewer()
 
   parseCoords()
+
+  addLabelsToLines(1)
 
   const centerPoint = calculateCenterPoint(VagusTracingCoordArray)
 
@@ -113,6 +124,14 @@ onMounted(async () => {
 })
 
 const init3DViewer = () => {
+  // Create and attach CSS2DRenderer
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0px';
+  labelRenderer.domElement.style.zIndex = "1";
+  labelRenderer.domElement.style.pointerEvents = 'none'
+  viewerContainer.value.appendChild(labelRenderer.domElement);
   vagusNerveScene = new THREE.Scene()
   anatomicalLandmarksScene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(50, 1, 0.01, 10000)
@@ -122,9 +141,55 @@ const init3DViewer = () => {
   renderer.autoClear = false
   const { offsetWidth, offsetHeight } = viewerContainer.value
   renderer.setSize(offsetWidth, offsetHeight)
+  labelRenderer.setSize(offsetWidth, offsetHeight + 32)
   viewerContainer.value.appendChild(renderer.domElement)
 
   vagusNerveScene.add(new THREE.AxesHelper(5))
+}
+
+const createTextLabel = (text, position) => {
+  const div = document.createElement('div');
+  div.className = 'text-label';
+  div.textContent = text;
+  div.style.color = 'white';
+  div.style.fontSize = '12px';
+  div.style.background = 'rgba(0, 0, 0, 0.5)';
+  div.style.padding = '2px 5px';
+  div.style.borderRadius = '3px';
+  viewerContainer.value.appendChild(div)
+
+  const textObject = new CSS2DObject(div);
+  textObject.position.set(position.x, position.y, position.z);
+  return textObject;
+};
+
+const addLabelsToLines = (layerId) => {
+  AnatomicalLandmarksCoordArray.forEach((coordArray, index) => {
+    if (coordArray.length < 2) return
+
+    // Compute midpoint of the first and last point of the line
+    const firstPoint = new THREE.Vector3(
+      parseFloat(coordArray[0].X) || 0,
+      parseFloat(coordArray[0].Y) || 0,
+      parseFloat(coordArray[0].Z) || 0
+    )
+
+    const lastPoint = new THREE.Vector3(
+      parseFloat(coordArray[coordArray.length - 1].X) || 0,
+      parseFloat(coordArray[coordArray.length - 1].Y) || 0,
+      parseFloat(coordArray[coordArray.length - 1].Z) || 0
+    )
+
+    const midpoint = new THREE.Vector3().addVectors(firstPoint, lastPoint).multiplyScalar(0.5)
+
+    // Create a label with the line's filename
+    const folder = getAnatomicalLandmarksFolder('Skeletal-landmarks')
+    if (folder) {
+      const label = createTextLabel(folder['files'][index]["name"], midpoint)
+      label.layers.set(layerId)
+      vagusNerveScene.add(label)
+    }
+  })
 }
 
 const parseCoords = () => {
@@ -181,13 +246,12 @@ const parseCoords = () => {
       resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
     })
     const line = new Line2(lineGeometry, lineMaterial)
-    line.layers.set(0)
+    line.layers.set(1)
     
     vagusNerveScene.add(line)
     
     //line.userData = { id: `file_${index}`, fileName: props.anatomicalLandmarksFolders[index]["name"] }
   })
-  camera.layers.enableAll()
 }
 
 const calculateCenterPoint = (coordArrays) => {
@@ -287,7 +351,6 @@ const selectedRegionLabel = computed(() => lastSelectedNerveSegment.value != nul
 
 // Render
 function renderViewer() {
-  renderer.render(vagusNerveScene, camera)
   window.addEventListener('resize', onWindowResize, false)
   function onWindowResize() {
     if (viewerContainer.value == null) { return }
@@ -295,6 +358,7 @@ function renderViewer() {
     camera.aspect = offsetWidth / offsetHeight
     camera.updateProjectionMatrix()
     renderer.setSize(offsetWidth, offsetHeight)
+    labelRenderer.setSize(offsetWidth, offsetHeight)
     render()
   }
 }
@@ -305,7 +369,9 @@ function animate() {
 }
 
 function render() {
+  camera.layers.enableAll()
   renderer.render(vagusNerveScene, camera)
+  labelRenderer.render(vagusNerveScene, camera)
 }
 
 onBeforeUnmount(() => {
