@@ -33,7 +33,7 @@
 
 <script setup>
 import { useConfig } from '../index.js'
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import VagusTracingViewer from './VagusTracingViewer.vue'
 import FileSelector from './FileSelector.vue'
 import VideoPlayer from './VideoPlayer.vue'
@@ -67,8 +67,6 @@ const SEGMENT_TO_FILE_KEYS_MAPPING = {
   'SA-': ['SA'],
   'SP-': ['SP']
 }
-
-const viewerLoading = computed(() => coordFilesLoading.value || anatomicalLandmarksFoldersLoading.value)
 
 watch(error, (newValue) => {
   if (newValue == null) { return }
