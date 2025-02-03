@@ -41,5 +41,6 @@ const formatFileSize = (bytes) => {
 <style scoped>
 .el-table {
   cursor: pointer;
+  z-index: 5;
 }
 </style>
