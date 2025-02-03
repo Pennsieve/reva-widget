@@ -1,5 +1,5 @@
 let config = {
-  sparcApi: 'http://localhost:8000'// 'https://sparc-api.herokuapp.com',
+  sparcApi: import.meta.env.VITE_SPARC_API || 'http://localhost:8000',
 }
 
 export const configure = (options) => {
