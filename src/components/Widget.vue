@@ -164,7 +164,12 @@ async function fetchAnatomicalLandmarksFolders(subjectId) {
       throw new Error(`Error fetching Anatomical landmarks files for ${subjectId}! ${response.status}: ${response.statusText}`)
     }
     const data = await response.json()
-    return data['folders']
+    let folders = data['folders']
+    let layerId = 1
+    for (let folder of folders) {
+      folder['id'] = layerId++
+    }
+    return folders
   } catch (error) {
     throw new Error(error.message)
   }
@@ -228,9 +233,9 @@ function closeDialog() {
 </script>
 <style scoped>
 .widget {
-  height: 100%;
-  width: 100%;
-  overflow: auto;
+  height: 100vh;
+  width: 100vw;
+  overflow: clip;
   display: flex;
   position: relative;
 }
@@ -239,8 +244,10 @@ function closeDialog() {
   top: 1rem;
   left: 1rem;
   color: white;
+  z-index: 1;
 }
 .vagus-viewer {
+  position: relative;
   flex: 0 0 80%;
   max-width: 80%;
   background-color: black;
