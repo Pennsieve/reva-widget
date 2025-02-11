@@ -21,13 +21,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
-import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer"
 import * as d3 from "d3"
 import * as THREE from "three"
 
 
-const emit = defineEmits(['segmentSelected']);
-const VAGUS_TRACING_LAYER_ID = 0;
+const emit = defineEmits(['segmentSelected'])
+const VAGUS_TRACING_LAYER_ID = 0
 
 const props = defineProps({
   vagusCoordFiles: {
@@ -150,12 +150,12 @@ onMounted(async () => {
 
 const init3DViewer = () => {
   // Create and attach CSS2DRenderer
-  labelRenderer = new CSS2DRenderer();
-  labelRenderer.domElement.style.position = 'absolute';
-  labelRenderer.domElement.style.top = '0px';
-  labelRenderer.domElement.style.zIndex = "1";
+  labelRenderer = new CSS2DRenderer()
+  labelRenderer.domElement.style.position = 'absolute'
+  labelRenderer.domElement.style.top = '0px'
+  labelRenderer.domElement.style.zIndex = "1"
   labelRenderer.domElement.style.pointerEvents = 'none'
-  viewerContainer.value.appendChild(labelRenderer.domElement);
+  viewerContainer.value.appendChild(labelRenderer.domElement)
   vagusNerveScene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(50, 1, 0.01, 10000)
   camera.position.z = 5000
@@ -171,20 +171,20 @@ const init3DViewer = () => {
 }
 
 const createTextLabel = (text, position) => {
-  const div = document.createElement('div');
-  div.className = 'text-label';
-  div.textContent = text;
-  div.style.color = 'white';
-  div.style.fontSize = '12px';
-  div.style.background = 'rgba(0, 0, 0, 0.5)';
-  div.style.padding = '2px 5px';
-  div.style.borderRadius = '3px';
+  const div = document.createElement('div')
+  div.className = 'text-label'
+  div.textContent = text
+  div.style.color = 'white'
+  div.style.fontSize = '12px'
+  div.style.background = 'rgba(0, 0, 0, 0.5)'
+  div.style.padding = '2px 5px'
+  div.style.borderRadius = '3px'
   viewerContainer.value.appendChild(div)
 
-  const textObject = new CSS2DObject(div);
-  textObject.position.set(position.x, position.y, position.z);
-  return textObject;
-};
+  const textObject = new CSS2DObject(div)
+  textObject.position.set(position.x, position.y, position.z)
+  return textObject
+}
 
 const addLabelsToAnatomicalLandmarks = () => {
   let fileIndex = 0
@@ -291,8 +291,9 @@ const parseCoords = () => {
   })
 }
 
+// used to dynamically generate colors based off the folder name
 const stringToColor = (str) => {
-  let hash = 0;
+  let hash = 0
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 7) - hash)
   }
