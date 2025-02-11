@@ -2,6 +2,9 @@
   <div ref="viewerContainer" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp" class="viewer-container">
     <div class="selected-region-label">Selected Vagus Region: {{ selectedRegionLabel }}</div>
     <div class="highlighted-region-label">Highlighted Vagus Region: {{ highlightedRegionLabel }}</div>
+    <el-checkbox-group class="anatomical-landmarks-toggle" v-if="anatomicalLandmarksFolders.length > 1" v-model="visibleAnatomicalLandmarksFolders">
+      <el-checkbox v-for="folder in anatomicalLandmarksFolders" :key="folder['name']" :label="folder['name']" :value="folder['name']" />
+    </el-checkbox-group>
   </div>
 </template>
 
@@ -34,10 +37,11 @@ const props = defineProps({
 const viewerContainer = ref(null)
 let mouseMoved = ref(false)
 let VagusTracingCoordArray = []
-let AnatomicalLandmarksCoordArray = []
+let AnatomicalLandmarksCoordArray = ref([])
 let vagusNerveScene, anatomicalLandmarksScene, camera, renderer, controls, raycaster, mouse, labelRenderer
 let lastHighlightedNerveSegment = ref(null)
 let lastSelectedNerveSegment = ref(null)
+const visibleAnatomicalLandmarksFolders = ref([])
 
 watch(lastSelectedNerveSegment, (newValue) => {
   emit('segmentSelected', pathOr(null, ['userData','fileName'], newValue))
@@ -72,13 +76,13 @@ const loadVagusTracingCSVFile = (fileUrl) => {
   })
 }
 
-const loadAnatomicalLandmarksCSVFile = (fileUrl) => {
+const loadAnatomicalLandmarksCSVFile = (fileUrl, folderName) => {
   const loader = new THREE.FileLoader()
   return new Promise((resolve, reject) => {
     loader.load(
       fileUrl,
       (data) => {
-        AnatomicalLandmarksCoordArray.push(data)
+        AnatomicalLandmarksCoordArray.value.push({ "data": data, "folderName": folderName })
         resolve()
       },
       (xhr) => {
@@ -91,10 +95,12 @@ const loadAnatomicalLandmarksCSVFile = (fileUrl) => {
     )
   })
 }
-const folder = getAnatomicalLandmarksFolder('Skeletal-landmarks')
-if (folder) {
-  for (const file of folder['files'])
-    await loadAnatomicalLandmarksCSVFile(file["s3Url"])
+
+for (const folder of props.anatomicalLandmarksFolders){
+  for (const file of folder['files']) {
+    await loadAnatomicalLandmarksCSVFile(file["s3Url"], folder["name"])
+  }
+  visibleAnatomicalLandmarksFolders.value.push(folder["name"])
 }
 for (const file of props.vagusCoordFiles) {
   await loadVagusTracingCSVFile(file["s3Url"])
@@ -105,7 +111,7 @@ onMounted(async () => {
 
   parseCoords()
 
-  addLabelsToLines(1)
+  addLabelsToAnatomicalLandmarks()
 
   const centerPoint = calculateCenterPoint(VagusTracingCoordArray)
 
@@ -162,8 +168,10 @@ const createTextLabel = (text, position) => {
   return textObject;
 };
 
-const addLabelsToLines = (layerId) => {
-  AnatomicalLandmarksCoordArray.forEach((coordArray, index) => {
+const addLabelsToAnatomicalLandmarks = () => {
+  let fileIndex = 0
+  AnatomicalLandmarksCoordArray.value.forEach(({ data, folderName }) => {
+    const coordArray = data
     if (coordArray.length < 2) return
 
     // Compute midpoint of the first and last point of the line
@@ -182,11 +190,18 @@ const addLabelsToLines = (layerId) => {
     const midpoint = new THREE.Vector3().addVectors(firstPoint, lastPoint).multiplyScalar(0.5)
 
     // Create a label with the line's filename
-    const folder = getAnatomicalLandmarksFolder('Skeletal-landmarks')
+    const folder = getAnatomicalLandmarksFolder(folderName)
     if (folder) {
-      const label = createTextLabel(folder['files'][index]["name"], midpoint)
-      label.layers.set(layerId)
+      const label = createTextLabel(folder['files'][fileIndex]["name"], midpoint)
+      label.layers.set(folder['id'])
       vagusNerveScene.add(label)
+    }
+    // Since we are iterating over all the different folders data but pulling the files from only one folder
+    // we need to reset the index each time we start looking into a different folder
+    if (fileIndex == folder['files'].length - 1) {
+      fileIndex = 0
+    } else {
+      fileIndex += 1
     }
   })
 }
@@ -223,8 +238,12 @@ const parseCoords = () => {
     line.userData = { id: `file_${index}`, fileName: props.vagusCoordFiles[index]["name"] }
   })
 
-  AnatomicalLandmarksCoordArray = AnatomicalLandmarksCoordArray.map((line) => d3.csvParse(line))
-  AnatomicalLandmarksCoordArray.forEach((coordArray, index) => {
+  AnatomicalLandmarksCoordArray.value = AnatomicalLandmarksCoordArray.value.map(({ data, folderName }) => ({
+    'data': d3.csvParse(data),
+    'folderName': folderName
+  }))
+  AnatomicalLandmarksCoordArray.value.forEach(({ data, folderName }) => {
+    const coordArray = data
     const mappedPoints = []
     coordArray.forEach((row) => {
       const x = parseFloat(row.X)
@@ -238,19 +257,32 @@ const parseCoords = () => {
 
     const lineGeometry = new LineGeometry()
     lineGeometry.setPositions(mappedPoints.flatMap(p => [p.x, p.y, p.z])) // Flatten the points for LineGeometry
-
+    const color = stringToColor(folderName)
     const lineMaterial = new LineMaterial({
-      color: 0xffff00,
+      color: color,
       linewidth: 5,
       resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
     })
     const line = new Line2(lineGeometry, lineMaterial)
-    line.layers.set(1)
+    const folder = getAnatomicalLandmarksFolder(folderName)
+    line.layers.set(folder['id'])
     
     vagusNerveScene.add(line)
     
     //line.userData = { id: `file_${index}`, fileName: props.anatomicalLandmarksFolders[index]["name"] }
   })
+}
+
+const stringToColor = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  let color = "#"
+  for (let i = 0; i < 3; i++) {
+    color += ("00" + ((hash >> (i * 8)) & 0xff).toString(16)).slice(-2)
+  }
+  return color
 }
 
 const calculateCenterPoint = (coordArrays) => {
@@ -410,5 +442,13 @@ canvas {
   width: 100vw;
   right: 0;
   top: 0;
+}
+.anatomical-landmarks-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 0;
+}
+.el-checkbox {
+  display: block;
 }
 </style>
