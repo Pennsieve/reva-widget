@@ -38,7 +38,7 @@ const viewerContainer = ref(null)
 let mouseMoved = ref(false)
 let VagusTracingCoordArray = []
 let AnatomicalLandmarksCoordArray = ref([])
-let vagusNerveScene, anatomicalLandmarksScene, camera, renderer, controls, raycaster, mouse, labelRenderer
+let vagusNerveScene, camera, renderer, controls, raycaster, mouse, labelRenderer
 let lastHighlightedNerveSegment = ref(null)
 let lastSelectedNerveSegment = ref(null)
 const visibleAnatomicalLandmarksFolders = ref([])
@@ -138,7 +138,6 @@ const init3DViewer = () => {
   labelRenderer.domElement.style.pointerEvents = 'none'
   viewerContainer.value.appendChild(labelRenderer.domElement);
   vagusNerveScene = new THREE.Scene()
-  anatomicalLandmarksScene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(50, 1, 0.01, 10000)
   camera.position.z = 5000
 
