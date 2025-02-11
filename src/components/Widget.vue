@@ -233,9 +233,9 @@ function closeDialog() {
 </script>
 <style scoped>
 .widget {
-  height: 100%;
-  width: 100%;
-  overflow: auto;
+  height: 100vh;
+  width: 100vw;
+  overflow: clip;
   display: flex;
   position: relative;
 }

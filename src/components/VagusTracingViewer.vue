@@ -2,8 +2,14 @@
   <div ref="viewerContainer" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp" class="viewer-container">
     <div class="selected-region-label">Selected Vagus Region: {{ selectedRegionLabel }}</div>
     <div class="highlighted-region-label">Highlighted Vagus Region: {{ highlightedRegionLabel }}</div>
-    <el-checkbox-group class="anatomical-landmarks-toggle" v-if="anatomicalLandmarksFolders.length > 1" v-model="visibleAnatomicalLandmarksFolders">
-      <el-checkbox v-for="folder in anatomicalLandmarksFolders" :key="folder['name']" :label="folder['name']" :value="folder['name']" />
+    <el-checkbox-group fill="#ffffff" class="anatomical-landmarks-toggle" v-if="anatomicalLandmarksFolders.length > 1" v-model="visibleAnatomicalLandmarksFolders" @mouseup.stop>
+      <el-checkbox 
+        v-for="folder in anatomicalLandmarksFolders" 
+        :key="folder['name']" 
+        :label="folder['name']" 
+        :value="folder['name']"
+        :style="{ color: `${stringToColor(folder['name'])} !important` }"
+      />
     </el-checkbox-group>
   </div>
 </template>
@@ -45,6 +51,17 @@ const visibleAnatomicalLandmarksFolders = ref([])
 
 watch(lastSelectedNerveSegment, (newValue) => {
   emit('segmentSelected', pathOr(null, ['userData','fileName'], newValue))
+})
+
+watch(visibleAnatomicalLandmarksFolders, (newValue) => {
+  props.anatomicalLandmarksFolders.forEach(folder => {
+    const layerId = folder['id']
+    newValue.includes(folder['name']) ?
+      camera.layers.enable(layerId) :
+      camera.layers.disable(layerId)
+  })
+  const folder = getAnatomicalLandmarksFolder()
+
 })
 
 const getAnatomicalLandmarksFolder = (name) => {
@@ -124,6 +141,8 @@ onMounted(async () => {
 
   raycaster = new THREE.Raycaster()
   mouse = new THREE.Vector2()
+
+  camera.layers.enableAll()
 
   renderViewer()
   animate()
@@ -275,7 +294,7 @@ const parseCoords = () => {
 const stringToColor = (str) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash = str.charCodeAt(i) + ((hash << 7) - hash)
   }
   let color = "#"
   for (let i = 0; i < 3; i++) {
@@ -399,7 +418,6 @@ function animate() {
 }
 
 function render() {
-  camera.layers.enableAll()
   renderer.render(vagusNerveScene, camera)
   labelRenderer.render(vagusNerveScene, camera)
 }
@@ -449,5 +467,15 @@ canvas {
 }
 .el-checkbox {
   display: block;
+}
+:deep(.el-checkbox__input.is-checked+.el-checkbox__label) {
+  color: inherit !important; /* Ensures custom color takes precedence */
+}
+:deep(.el-checkbox__input .el-checkbox__inner) {
+  background-color: white !important;
+  border-color: white !important;
+}
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner:after) {
+  border-color: black !important;
 }
 </style>
