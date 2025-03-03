@@ -50,7 +50,7 @@ let lastSelectedNerveSegment = ref(null)
 const visibleAnatomicalLandmarksFolders = ref([])
 
 watch(lastSelectedNerveSegment, (newValue) => {
-  emit('segmentSelected', pathOr(null, ['userData','fileName'], newValue))
+  emit('segmentSelected', newValue)
 })
 
 watch(visibleAnatomicalLandmarksFolders, (newValue) => {
@@ -253,7 +253,7 @@ const parseCoords = () => {
     line.layers.set(VAGUS_TRACING_LAYER_ID)
     vagusNerveScene.add(line)
 
-    line.userData = { id: `file_${index}`, fileName: props.vagusCoordFiles[index]["name"] }
+    line.userData = { id: `file_${index}`, fileName: props.vagusCoordFiles[index]["name"], region: props.vagusCoordFiles[index]["region"] }
   })
 
   AnatomicalLandmarksCoordArray.value = AnatomicalLandmarksCoordArray.value.map(({ data, folderName }) => ({

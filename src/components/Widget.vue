@@ -56,16 +56,16 @@ const config = useConfig()
 
 // Attempting to map segment file names to microCt filename and account for naming inconsistencies
 const SEGMENT_TO_FILE_KEYS_MAPPING = {
-  'CR-': ['CR'],
-  'CL-': ['CL'],
-  'TR-': ['TR'],
+  'CR': ['CR'],
+  'CL': ['CL'],
+  'TR': ['TR'],
   'TL': ['TL'],
-  'E-': ['EA','EP'],
-  'S-': ['SA', 'SP'],
-  'EA-': ['EA'],
-  'EP-': ['EP'],
-  'SA-': ['SA'],
-  'SP-': ['SP']
+  'E': ['EA','EP'],
+  'S': ['SA', 'SP'],
+  'EA': ['EA'],
+  'EP': ['EP'],
+  'SA': ['SA'],
+  'SP': ['SP']
 }
 
 watch(error, (newValue) => {
@@ -192,21 +192,22 @@ async function fetchMicroCtFiles(subjectId) {
 }
 
 // Based off the REVA naming convention outlined in their MicroCTDataOverview.pdf
-function getSegmentFileKeys(filename) {
+function getSegmentFileKeys(region) {
   let foundKeys = []
   Object.keys(SEGMENT_TO_FILE_KEYS_MAPPING).forEach(segKey => {
-    if (filename.includes(segKey)) {
+    if (region.includes(segKey)) {
       foundKeys.push(segKey)
     }
   })
   return foundKeys
 }
 
-function onVagusSegmentSelected(filename) {
-  if (filename == null) {
+function onVagusSegmentSelected(branch) {
+  const userData = branch?.userData
+  if (branch == null || userData == null) {
     filteredVagusMicroCtFiles.value = vagusMicroCtFiles.value
   } else {
-    const segmentFileKeys = getSegmentFileKeys(filename)
+    const segmentFileKeys = getSegmentFileKeys(userData['region'])
     let microCtKeys = []
     segmentFileKeys.forEach(segKey => {
       const segFileKeyValues = SEGMENT_TO_FILE_KEYS_MAPPING[segKey]
